@@ -43,7 +43,7 @@ module Recoverable
 
   def generate_custom_handler_args(req_params:, evaluateables:, local_args:, instance:, custom_handler_args:)
     req_params.each do |key|
-      custom_handler_args[key] ||= instance.send(:eval, key.to_s)  if evaluateables.include?(key)
+      custom_handler_args[key]   = instance.send(:eval, key.to_s)  if evaluateables.include?(key)
       custom_handler_args[key] ||= local_args[key] if local_args.keys.include?(key)
     end
 
