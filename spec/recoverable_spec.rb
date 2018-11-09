@@ -2,7 +2,7 @@ require 'spec_helper'
 RSpec.describe Recoverable do
   let!(:instance) { self.class::TestClass.new }
   subject{ instance.bar }
-  context "passing no errors" do
+  context "most basic defaults" do
     class self::TestClass
       extend Recoverable
       recover :bar, tries: 2
@@ -12,20 +12,19 @@ RSpec.describe Recoverable do
 
     end
 
-    it "defaults to standard error and no sleep" do
+    it "rescues on standard error and does not sleep" do
       expect_any_instance_of(Kernel).to receive(:sleep).never
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(StandardError)
       expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
     end
 
-    it "recovers from inheritors of standard error" do
+    it "rescues from inheritors of standard error" do
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
       expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
     end
-
   end
 
-  context "passing specific errors" do
+  context "configuring a specific error to resuce" do
     class self::TestClass
       extend Recoverable
       recover :bar, tries: 2, on: CustomError
@@ -35,24 +34,54 @@ RSpec.describe Recoverable do
 
     end
 
-    it "recovers from specific error" do
+    it "rescues from specific error" do
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
       expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
     end
 
-    it "does not recover from different raised error" do
+    it "does not rescue from different raised error" do
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(UnrecoveredError)
       expect{ subject }.to raise_error(UnrecoveredError)
     end
 
-    it "does not recover from standard error" do
+    it "does not rescue from standard error" do
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(StandardError)
       expect{ subject }.to raise_error(StandardError)
     end
-
   end
 
-  context "passing specific sleep" do
+  context "configuring multiple specific errors to resuce" do
+    class self::TestClass
+      extend Recoverable
+      recover :bar, tries: 2, on: [CustomError, AlternateCustomError]
+
+      def bar; baz; end
+      def baz; end
+
+    end
+
+    it "rescues from error A" do
+      allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
+      expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
+    end
+
+    it "rescues from error B" do
+      allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(AlternateCustomError)
+      expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
+    end
+
+    it "does not rescue from different raised error" do
+      allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(UnrecoveredError)
+      expect{ subject }.to raise_error(UnrecoveredError)
+    end
+
+    it "does not rescue from standard error" do
+      allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(StandardError)
+      expect{ subject }.to raise_error(StandardError)
+    end
+  end
+
+  context "configuring sleep time" do
     class self::TestClass
       extend Recoverable
       recover :bar, tries: 2, on: CustomError, sleep: 3
@@ -62,14 +91,33 @@ RSpec.describe Recoverable do
 
     end
 
-    it "recovers from specific error" do
+    it "sleeps for configured time" do
       expect_any_instance_of(Kernel).to receive(:sleep).with(3).exactly(2).times
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
       expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
     end
   end
 
-  context "passing custom error handler" do
+  context "configure custom exception" do
+    class self::TestClass
+      class TestCustomExecption < StandardError; end
+      extend Recoverable
+      recover :bar, tries: 2, on: CustomError, custom_exception: TestCustomExecption
+
+      def bar; baz; end
+      def baz; end
+
+    end
+
+    it "responds from error with custom exception" do
+      allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
+      expect{ subject }.to_not raise_error(Recoverable::RetryCountExceeded)
+      expect{ subject }.to raise_error(self.class::TestClass::TestCustomExecption)
+    end
+  end
+
+
+  context "configure custom error handler" do
     class self::TestClass
       extend Recoverable
       recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
@@ -82,14 +130,14 @@ RSpec.describe Recoverable do
 
     end
 
-    it "recovers from specific error" do
+    it "recovers from configured error by running handler method" do
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
       expect{ subject }.to_not raise_error(Recoverable::RetryCountExceeded)
       expect(subject).to eq("Handled")
     end
   end
-  
-  context "passing custom error handler with error message" do
+
+  context "handler method utilizes returned error" do
     class self::TestClass
       extend Recoverable
       recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
@@ -106,16 +154,16 @@ RSpec.describe Recoverable do
 
     end
 
-    subject { instance.bar(arg: "I'm a keyword Arg")}
+    subject { instance.bar}
 
-    it "recovers from specific error" do
+    it "has access to the raised error" do
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError.new("Custom Error!"))
       expect{ subject }.to_not raise_error(Recoverable::RetryCountExceeded)
       expect(subject).to eq("Custom Error!")
     end
   end
 
-  context "passing custom error handler with arg" do
+  context "handler method utilizes args" do
     class self::TestClass
       extend Recoverable
       recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
@@ -134,14 +182,14 @@ RSpec.describe Recoverable do
 
     subject { instance.bar(arg: "I'm a keyword Arg")}
 
-    it "recovers from specific error" do
+    it "has access to the keyword args" do
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
       expect{ subject }.to_not raise_error(Recoverable::RetryCountExceeded)
       expect(subject).to eq("I'm a keyword Arg")
     end
   end
 
-  context "passing custom error handler with a method call" do
+  context "handler method utilizes other instance private and public methods" do
     class self::TestClass
       extend Recoverable
       recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
@@ -167,12 +215,43 @@ RSpec.describe Recoverable do
 
     end
 
-    subject { instance.bar(arg: "I'm a keyword Arg")}
+    subject { instance.bar}
 
     it "recovers from specific error" do
       allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
       expect{ subject }.to_not raise_error(Recoverable::RetryCountExceeded)
       expect(subject).to eq( "I'm a method call, I'm a private method call")
+    end
+  end
+
+  context "handler method utilizes instance variables" do
+    class self::TestClass
+      extend Recoverable
+      recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
+      attr_reader :qux
+
+      def initialize
+        @qux = "I'm an instance variable"
+      end
+
+      def bar(arg:nil)
+        baz
+      end
+
+      def baz; end
+
+      def handle_error(error:, instance_variable: qux)
+        "#{instance_variable}"
+      end
+
+    end
+
+    subject { instance.bar}
+
+    it "recovers from specific error" do
+      allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
+      expect{ subject }.to_not raise_error(Recoverable::RetryCountExceeded)
+      expect(subject).to eq( "I'm an instance variable")
     end
   end
 end

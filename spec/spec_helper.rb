@@ -7,9 +7,7 @@ SimpleCov.start do
 end
 
 require 'recoverable'
-require 'mocks/foo'
-require 'mocks/custom_error'
-require 'mocks/unrecovered_error'
+require 'mocks/test_errors'
 require 'factory_bot'
 
 RSpec.configure do |config|
