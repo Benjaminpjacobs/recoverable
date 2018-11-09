@@ -5,14 +5,15 @@ module Recoverable
     self.prepend proxy
   end
 
-  def create_proxy(method_name:, times:, recoverable:, sleep:, custom_handler:, custom_exception:)
+  def create_proxy(method_name:, tries:, recoverable:, sleep:, custom_handler:, custom_exception:)
     Module.new do
       define_method(method_name) do |*args|
+        retries = tries
         begin
           super *args
         rescue *recoverable => error
           sleep(sleep) if sleep
-          retry        if (times -= 1) > 0
+          retry        if (retries -= 1) > 0
           self.class.handle_exception(instance: self, custom_handler: custom_handler, args: args, error: error, custom_exception: custom_exception)
         end
       end
