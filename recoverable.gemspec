@@ -26,4 +26,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'bundler', '~> 1.3'
   s.add_development_dependency 'rake', '~> 12.0'
   s.add_development_dependency 'rspec', '~> 3.0'
+  s.add_development_dependency 'factory_bot', '~> 4.0'
 end

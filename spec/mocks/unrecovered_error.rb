@@ -1,0 +1,1 @@
+class UnrecoveredError < StandardError; end
