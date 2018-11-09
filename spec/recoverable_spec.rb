@@ -5,7 +5,7 @@ RSpec.describe Recoverable do
   context "passing no errors" do
     class self::TestClass
       extend Recoverable
-      recover :bar, times: 2
+      recover :bar, tries: 2
 
       def bar; baz; end
       def baz; end
@@ -28,7 +28,7 @@ RSpec.describe Recoverable do
   context "passing specific errors" do
     class self::TestClass
       extend Recoverable
-      recover :bar, times: 2, on: CustomError
+      recover :bar, tries: 2, on: CustomError
 
       def bar; baz; end
       def baz; end
@@ -55,7 +55,7 @@ RSpec.describe Recoverable do
   context "passing specific sleep" do
     class self::TestClass
       extend Recoverable
-      recover :bar, times: 2, on: CustomError, sleep: 3
+      recover :bar, tries: 2, on: CustomError, sleep: 3
 
       def bar; baz; end
       def baz; end
@@ -72,7 +72,7 @@ RSpec.describe Recoverable do
   context "passing custom error handler" do
     class self::TestClass
       extend Recoverable
-      recover :bar, times: 2, on: CustomError, custom_handler: :handle_error
+      recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
 
       def bar; baz; end
       def baz; end
@@ -92,7 +92,7 @@ RSpec.describe Recoverable do
   context "passing custom error handler with error message" do
     class self::TestClass
       extend Recoverable
-      recover :bar, times: 2, on: CustomError, custom_handler: :handle_error
+      recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
 
       def bar(arg:nil)
         baz
@@ -118,7 +118,7 @@ RSpec.describe Recoverable do
   context "passing custom error handler with arg" do
     class self::TestClass
       extend Recoverable
-      recover :bar, times: 2, on: CustomError, custom_handler: :handle_error
+      recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
 
       def bar(arg:nil)
         baz
@@ -144,7 +144,7 @@ RSpec.describe Recoverable do
   context "passing custom error handler with a method call" do
     class self::TestClass
       extend Recoverable
-      recover :bar, times: 2, on: CustomError, custom_handler: :handle_error
+      recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
 
       def bar(arg:nil)
         baz

@@ -1,7 +1,7 @@
 module Recoverable
-  def recover(method_name, times: 1, on: StandardError, sleep: nil, custom_handler: nil, custom_exception: RetryCountExceeded)
+  def recover(method_name, tries: 1, on: StandardError, sleep: nil, custom_handler: nil, custom_exception: RetryCountExceeded)
     recoverable = Array.wrap(on)
-    proxy       = create_proxy(method_name: method_name, times: times, recoverable: recoverable, sleep: sleep, custom_handler: custom_handler, custom_exception: custom_exception)
+    proxy       = create_proxy(method_name: method_name, tries: tries, recoverable: recoverable, sleep: sleep, custom_handler: custom_handler, custom_exception: custom_exception)
     self.prepend proxy
   end
 
