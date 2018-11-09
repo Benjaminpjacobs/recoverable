@@ -72,7 +72,7 @@ RSpec.describe Recoverable do
   context "passing custom error handler" do
     class self::TestClass
       extend Recoverable
-      recover :bar, 1.times, on: CustomError, handler: :handle_error
+      recover :bar, 1.times, on: CustomError, custom_handler: :handle_error
 
       def bar; baz; end
       def baz; end
@@ -92,7 +92,7 @@ RSpec.describe Recoverable do
   context "passing custom error handler with error message" do
     class self::TestClass
       extend Recoverable
-      recover :bar, 1.times, on: CustomError, handler: :handle_error
+      recover :bar, 1.times, on: CustomError, custom_handler: :handle_error
 
       def bar(arg:nil)
         baz
@@ -118,7 +118,7 @@ RSpec.describe Recoverable do
   context "passing custom error handler with arg" do
     class self::TestClass
       extend Recoverable
-      recover :bar, 1.times, on: CustomError, handler: :handle_error
+      recover :bar, 1.times, on: CustomError, custom_handler: :handle_error
 
       def bar(arg:nil)
         baz
@@ -144,7 +144,7 @@ RSpec.describe Recoverable do
   context "passing custom error handler with a method call" do
     class self::TestClass
       extend Recoverable
-      recover :bar, 1.times, on: CustomError, handler: :handle_error
+      recover :bar, 1.times, on: CustomError, custom_handler: :handle_error
 
       def bar(arg:nil)
         baz
