@@ -1,5 +1,5 @@
 module Recoverable
-  def recover(method_name, times, on: [StandardError], sleep: nil, custom_handler: nil, custom_exception: RetryCountExceeded)
+  def recover(method_name, times:, on: [StandardError], sleep: nil, custom_handler: nil, custom_exception: RetryCountExceeded)
     recoverable = Array.wrap(on)
     proxy       = create_proxy(method_name: method_name, times: times, recoverable: recoverable, sleep: sleep, custom_handler: custom_handler, custom_exception: custom_exception)
     self.prepend proxy
@@ -8,16 +8,12 @@ module Recoverable
   def create_proxy(method_name:, times:, recoverable:, sleep:, custom_handler:, custom_exception:)
     Module.new do
       define_method(method_name) do |*args|
-        retries = times.dup
         begin
           super *args
         rescue *recoverable => error
-          begin
-            sleep(sleep) if sleep
-            retries.next && retry
-          rescue StopIteration
-              self.class.handle_exception(instance: self, custom_handler: custom_handler, args: args, error: error, custom_exception: custom_exception)
-          end
+          sleep(sleep) if sleep
+          retry        if (times -= 1) > 0
+          self.class.handle_exception(instance: self, custom_handler: custom_handler, args: args, error: error, custom_exception: custom_exception)
         end
       end
     end
@@ -35,7 +31,7 @@ module Recoverable
 
   def retrieve_required_parameters(instance, custom_handler)
     unbound_method = instance.class.instance_method(custom_handler)
-    unbound.parameters.map{|p| p[1] if p[0] == :keyreq }.compact
+    unbound_method.parameters.map{|p| p[1] if p[0] == :keyreq }.compact
   end
 
   def fetch_handler_args(args, instance, req_params, error)
