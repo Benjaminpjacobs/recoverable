@@ -43,13 +43,6 @@ module Recoverable
       end
     end
   end
-  class RestryableError < StandardError
-    attr_reader :binding
-    def initialize(binding)
-      @binding = binding
-      super
-    end
-  end
 end
 
 
