@@ -1,6 +1,5 @@
 [![Version      ](https://img.shields.io/gem/v/ship_station.svg?maxAge=2592000)](https://rubygems.org/gems/recoverable)
 [![Build Status ](https://travis-ci.com/Benjaminpjacobs/ship_station.svg)](https://travis-ci.com/Benjaminpjacobs/recoverable)
-[![Maintainability](https://api.codeclimate.com/v1/badges/dd436c45c8a52dc8c13c/maintainability)](https://codeclimate.com/github/Benjaminpjacobs/recoverable/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/dd436c45c8a52dc8c13c/test_coverage)](https://codeclimate.com/github/Benjaminpjacobs/recoverable/test_coverage)
 
 ## Recoverbale
