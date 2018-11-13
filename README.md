@@ -29,6 +29,73 @@ $ bundle install
 
 ## Usage
 
+Recoverable gives you a dynamic way retry handle errors on an instance of your class or an inherited class.
+
+### Default Behavior
+
+You can add recoverable to your class by simply extending the Gem and then telling it which method you would like to recover from and how many times you would like to retry.
+
+```ruby
+  class Foo
+    extend Recoverable
+    recover :bar, tries: 2
+
+    def bar
+      baz
+    end
+
+  end
+```
+With the above configuration any instance of `Foo` will recover any `StandardError` on `#bar` and retry 2 times without a sleep between retries. After the second retry it will raise the error `Recoverable::RetryCountExceeded` along with the information about what error had occured.
+
+### Configuration Options
+
+Recoverable allows for varied configurations to alter the behavior of the rescue and retry.
+
+#### Errors
+
+Setting up your class with the following will specifically recover on `CustomError`.
+
+```ruby
+  class Foo
+    extend Recoverable
+    recover :bar, tries: 2, on: CustomError
+
+    def bar
+      baz
+    end
+
+  end
+```
+Note that this configuration will on rescue and retry on CustomError and will not rescue any other error including `StandardError`.
+
+Recoverable can rescue on a collection of errors as well, however these must be passed to `on:` as an array.
+
+```ruby
+  recover :bar, tries: 2, on: [ CustomError, OtherCustomError ]
+```
+In the above case both `CustomError` and `OtherCustomError` will be rescued on the `#bar` method.
+
+#### Sleep
+
+Setting up your class with the following will sleep for 3 seconds between retries:
+
+```ruby
+  class Foo
+    extend Recoverable
+    recover :bar, tries: 2, sleep: 3
+
+    def bar
+      baz
+    end
+
+  end
+```
+
+#### Custom Exception
+
+#### Custom Handler
+
 
 ## How to contribute
 
