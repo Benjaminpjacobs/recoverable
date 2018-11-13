@@ -229,7 +229,7 @@ Lastly, error handler methods can be defined on either the parent or child class
     def baz; end
   end
 ```
-However, in the next example, the same configuration would call the `handle_error` method from the `ChildClass` instance
+However, in the next example, the same configuration would call the `handle_error` method from the `ChildClass` instance.
 
 ```ruby
 class ParentClass
