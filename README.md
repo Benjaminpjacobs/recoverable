@@ -46,7 +46,7 @@ You can add recoverable to your class by simply extending the Gem and then telli
 
   end
 ```
-With the above configuration any instance of `Foo` will recover any `StandardError` on `#bar` and retry 2 times without a sleep between retries. After the second retry it will raise the error `Recoverable::RetryCountExceeded` along with the information about what error had occured.
+With the above configuration any instance of `Foo` will recover any `StandardError` on `#bar` and retry 2 times without a wait between retries. After the second retry it will raise the error `Recoverable::RetryCountExceeded` along with the information about what error had occured.
 
 ### Configuration Options
 
@@ -76,19 +76,31 @@ Recoverable can rescue on a collection of errors as well, however these must be 
 ```
 In the above case both `CustomError` and `OtherCustomError` will be rescued on the `#bar` method.
 
-#### Sleep
+#### Wait
 
-Setting up your class with the following configuration will insert a 3 second sleep command between each retry:
+Setting up your class with the following configuration will insert a 3 second wait(utilizing ruby Kernel#sleep) between each retry:
 
 ```ruby
   class Foo
     extend Recoverable
-    recover :bar, tries: 2, sleep: 3
+    recover :bar, tries: 2, wait: 3
 
     def bar
       baz
     end
 
+  end
+```
+
+You can override the implementation of wait at the configuration level by including a proc that takes an integer argument:
+```ruby
+   recover :bar, tries: 2, wait: 3, wait_method: Proc.new{ |int| "Another implementation utilizing wait time" }
+```
+
+Additionally you can globally override the default wait implementation in an initializer by setting the default wait method:
+```ruby
+  Recoverable::Defaults.wait_method = Proc.new|int| 
+    #Do something else with wait time here....
   end
 ```
 
