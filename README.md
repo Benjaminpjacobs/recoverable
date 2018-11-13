@@ -29,7 +29,7 @@ $ bundle install
 
 ## Usage
 
-Recoverable gives you a dynamic way retry handle errors on an instance of your class or an inherited class.
+Recoverable gives you a dynamic way to retry and handle errors on an instance of a class or an inherited class.
 
 ### Default Behavior
 
