@@ -94,7 +94,7 @@ Setting up your class with the following configuration will insert a 3 second sl
 
 #### Custom Exception
 
-In addition to retrying, recoverable allows you to raise a custom exception after the rescue and retry attempts.
+In addition to retrying, recoverable allows you to throw a custom exception after the rescue and retry attempts.
 
 ```ruby
 
@@ -102,7 +102,7 @@ In addition to retrying, recoverable allows you to raise a custom exception afte
 
   class Foo
     extend Recoverable
-    recover :bar, tries: 2, custom_exception: MyException
+    recover :bar, tries: 2, throw: MyException
 
     def bar
       baz
@@ -135,6 +135,125 @@ Recoverable also allows you to configure a custom error handling method. This sh
 Please note that the name of the handler method should be passed to the configuration as a symbol. Also, the handler method can take either no arguments or a single keyword argument for `error:` if you would like access to the error inside the handler. Any other data inside the handler should be retrieved via instance methods or instance variables.
 
 
+### Inheritence
+
+One of the more powerful aspects of the recoverable implementation is how it handles inheritence.
+
+In the following example, recoverable is setup on the `#bar` method which is defined on both the parent and child class.
+
+```ruby
+  class ParentClass
+    extend Recoverable
+    recover :bar, tries: 2
+    def bar
+      baz
+    end
+
+  end
+
+  class ChildClass < ParentClass
+    def bar
+      super
+    end
+
+    def baz; end
+  end
+
+```
+
+Now any call to bar that results in an error registered with the recoverable gem will be rescued and retried based on the configuration as long as the error occurs in the parent scope.
+
+However in the following case the recoverable gem will rescue the error at the child level even though the error occurs in the parent class:
+
+```ruby
+  class ParentClass
+    def bar
+      baz
+    end
+
+  end
+
+  class ChildClass < ParentClass
+    extend Recoverable
+    recover :bar, tries: 2
+    def bar
+      super
+    end
+
+    def baz; end
+  end
+
+```
+
+The gem will rescue down through multiple inheritence as well:
+
+```ruby
+  class ParentClass
+    extend Recoverable
+    recover :bar, tries: 2
+    def bar
+      baz
+    end
+
+  end
+
+  class ChildClass < ParentClass
+    def baz; end
+  end
+
+  class SubChildClass < ChildClass
+    def bar
+      super
+    end
+  end
+```
+In the above, a call to the subchild class will throw an error that will be caught and retried by the recoverable configuration in the top level parent class
+
+Lastly, error handler methods can be defined on either the parent or child class. For example, assuming that the method `bar` is called from a `ChildClass` instance, in the first example below the `handle_error` method will be called from the `ParentClass`
+
+```ruby
+ class ParentClass
+    extend Recoverable
+    recover :bar, tries: 2, custom_handler: :handle_error
+
+    def bar
+      baz
+    end
+
+    def handle_error(error:)
+      "Parent Handler!"
+    end
+  end
+
+  class ChildClass < ParentClass
+    def baz; end
+  end
+```
+However, in the next example, the same configuration would call the `handle_error` method from the `ChildClass` instance
+
+```ruby
+class ParentClass
+  extend Recoverable
+  recover :bar, tries: 2, custom_handler: :handle_error
+
+  def bar
+    baz
+  end
+
+  def handle_error(error:)
+    "Parent Handler!"
+  end
+
+end
+
+class ChildClass < ParentClass
+  def baz; end
+
+  def handle_error(error:)
+    "Child Handler!"
+  end
+end
+```
 ## How to contribute
 
 * Fork the project

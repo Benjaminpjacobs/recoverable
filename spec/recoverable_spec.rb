@@ -390,7 +390,7 @@ RSpec.describe Recoverable do
     context 'Configuring recoverable on child class' do
       class self::TestParentClass
         def bar
-          baz
+          qux
         end
       end
 
