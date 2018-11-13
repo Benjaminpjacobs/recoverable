@@ -78,7 +78,7 @@ In the above case both `CustomError` and `OtherCustomError` will be rescued on t
 
 #### Sleep
 
-Setting up your class with the following will sleep for 3 seconds between retries:
+Setting up your class with the following configuration will insert a 3 second sleep command between each retry:
 
 ```ruby
   class Foo
@@ -94,7 +94,45 @@ Setting up your class with the following will sleep for 3 seconds between retrie
 
 #### Custom Exception
 
+In addition to retrying, recoverable allows you to raise a custom exception after the rescue and retry attempts.
+
+```ruby
+
+  class MyException < StandardError; end
+
+  class Foo
+    extend Recoverable
+    recover :bar, tries: 2, custom_exception: MyException
+
+    def bar
+      baz
+    end
+
+  end
+```
+
+In this configuration after bar was retried twice recoverable would not raise `StandardError` or `Recoverable::RetryCountExceeded` but would instead raise `MyException`
+
 #### Custom Handler
+
+Recoverable also allows you to configure a custom error handling method. This should be a method defined on the class or parent class of the instance.
+
+```ruby
+  class Foo
+    extend Recoverable
+    recover :bar, tries: 2, custom_handler: :handle_error
+
+    def bar
+      baz
+    end
+
+    def handle_error(:error)
+      "#{error} was retried twice, raised and then this method was called."
+    end
+  end
+```
+
+Please note that the name of the handler method should be passed to the configuration as a symbol. Also, the handler method can take either no arguments or a single keyword argument for `error:` if you would like access to the error inside the handler. Any other data inside the handler should be retrieved via instance methods or instance variables.
 
 
 ## How to contribute
