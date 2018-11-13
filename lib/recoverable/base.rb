@@ -1,18 +1,18 @@
 module Recoverable
-  def recover(method_name, tries: 1, on: StandardError, wait: nil, custom_handler: nil, throw: RetryCountExceeded)
+  def recover(method_name, tries: 1, on: StandardError, wait: nil, wait_method: nil,custom_handler: nil, throw: RetryCountExceeded)
     recoverable = Array.wrap(on)
-    proxy       = create_proxy(method_name: method_name, tries: tries, recoverable: recoverable, wait: wait, custom_handler: custom_handler, throw: throw)
+    proxy       = create_proxy(method_name: method_name, tries: tries, recoverable: recoverable, wait: wait, wait_method: wait_method, custom_handler: custom_handler, throw: throw)
     self.prepend proxy
   end
 
-  def create_proxy(method_name:, tries:, recoverable:, wait:, custom_handler:, throw:)
+  def create_proxy(method_name:, tries:, recoverable:, wait:, wait_method:, custom_handler:, throw:)
     Module.new do
       define_method(method_name) do |*args|
         retries = tries
         begin
           super *args
         rescue *recoverable => error
-          self.class.handle_wait(wait) if wait
+          self.class.handle_wait(wait, wait_method) if wait
           retry        if (retries -= 1) > 0
           self.class.handle_exception(instance: self, custom_handler: custom_handler, args: args, error: error, throw: throw)
         end
@@ -20,8 +20,12 @@ module Recoverable
     end
   end
 
-  def handle_wait(wait)
-    Defaults.wait(wait)
+  def handle_wait(wait, wait_method)
+    if wait_method
+      wait_method.call(wait)
+    else
+      Defaults.wait(wait)
+    end
   end
 
   def handle_exception(instance:, custom_handler:, args:, error:, throw: )

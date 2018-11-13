@@ -102,7 +102,7 @@ RSpec.describe Recoverable do
       end
     end
 
-    context "Configured for custom wait time with custom waiter method" do
+    context "Configured for custom wait time with new default waiter method" do
       class self::TestClass
         extend Recoverable
         recover :bar, tries: 2, on: CustomError, wait: 3
@@ -111,7 +111,7 @@ RSpec.describe Recoverable do
         def baz; end
 
       end
-      let(:custom_waiter) { Proc.new{|int| "I will not wait #{int} seconds"} }
+      let(:custom_waiter) { Proc.new{|int| p "Called Custom Default with arg: #{int}"} }
 
       before(:each) do
         Recoverable::Defaults.wait_method = custom_waiter
@@ -119,8 +119,26 @@ RSpec.describe Recoverable do
 
       it "custom waiter method for configured time" do
         expect(Recoverable::Defaults.wait_method).to eq(custom_waiter)
-        expect(Recoverable::Defaults).to receive(:wait).with(3).exactly(2).times
+        expect(Recoverable::Defaults).to receive(:wait).with(3).exactly(2).times.and_call_original
 
+        allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
+
+        expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
+      end
+    end
+
+    context "Configured for custom wait time with custom waiter method" do
+      class self::TestClass
+        extend Recoverable
+        recover :bar, tries: 2, on: CustomError, wait: 3, wait_method: Proc.new{|int| p "Called Custom Waiter with arg: #{int}"}
+
+        def bar; baz; end
+        def baz; end
+
+      end
+
+      it "custom waiter method for configured time" do
+        expect(Recoverable::Defaults).to receive(:wait).never
         allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
 
         expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
