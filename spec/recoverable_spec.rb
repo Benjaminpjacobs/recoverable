@@ -13,7 +13,7 @@ RSpec.describe Recoverable do
 
       end
 
-      it "rescues on standard error and does not sleep" do
+      it "rescues on standard error and does not wait" do
         expect_any_instance_of(Kernel).to receive(:sleep).never
         allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(StandardError)
         expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
@@ -82,10 +82,10 @@ RSpec.describe Recoverable do
       end
     end
 
-    context "Configured for custom sleep time" do
+    context "Configured for custom wait time with defualt" do
       class self::TestClass
         extend Recoverable
-        recover :bar, tries: 2, on: CustomError, sleep: 3
+        recover :bar, tries: 2, on: CustomError, wait: 3
 
         def bar; baz; end
         def baz; end
@@ -93,8 +93,36 @@ RSpec.describe Recoverable do
       end
 
       it "sleeps for configured time" do
-        expect_any_instance_of(Kernel).to receive(:sleep).with(3).exactly(2).times
+        expect(Recoverable::Defaults.wait_method).to be_a(Proc)
+        expect(Kernel).to receive(:sleep).with(3).exactly(2).times
+
         allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
+
+        expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
+      end
+    end
+
+    context "Configured for custom wait time with custom waiter method" do
+      class self::TestClass
+        extend Recoverable
+        recover :bar, tries: 2, on: CustomError, wait: 3
+
+        def bar; baz; end
+        def baz; end
+
+      end
+      let(:custom_waiter) { Proc.new{|int| "I will not wait #{int} seconds"} }
+
+      before(:each) do
+        Recoverable::Defaults.wait_method = custom_waiter
+      end
+
+      it "custom waiter method for configured time" do
+        expect(Recoverable::Defaults.wait_method).to eq(custom_waiter)
+        expect(Recoverable::Defaults).to receive(:wait).with(3).exactly(2).times
+
+        allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
+
         expect{ subject }.to raise_error(Recoverable::RetryCountExceeded)
       end
     end
@@ -103,7 +131,7 @@ RSpec.describe Recoverable do
       class self::TestClass
         class TestCustomExecption < StandardError; end
         extend Recoverable
-        recover :bar, tries: 2, on: CustomError, custom_exception: TestCustomExecption
+        recover :bar, tries: 2, on: CustomError, throw: TestCustomExecption
 
         def bar; baz; end
         def baz; end
