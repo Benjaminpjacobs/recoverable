@@ -1,7 +1,3 @@
 module Recoverable
-  class RetryCountExceeded < StandardError
-    def initialize(error)
-      super error
-    end
-  end
+  class RetryCountExceeded < StandardError; end
 end
