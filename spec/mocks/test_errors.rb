@@ -1,3 +1,3 @@
-class CustomError < StandardError ; end
-class UnrecoveredError < StandardError ; end
-class AlternateCustomError < StandardError ; end
+CustomError = Class.new(StandardError)
+UnrecoveredError = Class.new(StandardError)
+AlternateCustomError = Class.new(StandardError)

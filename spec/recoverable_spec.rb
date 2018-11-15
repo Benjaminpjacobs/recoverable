@@ -1,4 +1,5 @@
 require 'spec_helper'
+
 RSpec.describe Recoverable do
   context "Recover Directly on Class" do
     let!(:instance) { self.class::TestClass.new }
