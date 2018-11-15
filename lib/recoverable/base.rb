@@ -1,6 +1,6 @@
 module Recoverable
   def recover(method_name, tries: 1, on: StandardError, wait: nil, wait_method: nil,custom_handler: nil, throw: RetryCountExceeded)
-    recoverable = Array.wrap(on)
+    recoverable = [on].flatten
     proxy       = create_proxy(method_name: method_name, tries: tries, recoverable: recoverable, wait: wait, wait_method: wait_method, custom_handler: custom_handler, throw: throw)
     self.prepend proxy
   end
@@ -60,7 +60,7 @@ module Recoverable
   end
 
   def fetch_instance_variables(instance)
-    instance.instance_values.keys.map(&:to_sym)
+    instance_variables.map { |name| name[1..-1].to_sym }
   end
 
   def fetch_local_args(args)
@@ -72,7 +72,7 @@ module Recoverable
     instance.send(:public_methods) +
     instance.send(:local_variables)
   end
-  
+
 end
 
 
