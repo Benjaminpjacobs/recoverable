@@ -19,7 +19,6 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = '>= 2.3'
 
-  s.add_runtime_dependency 'her', '0.10.1'
   s.add_runtime_dependency 'activesupport'
 
   s.add_development_dependency 'pry-byebug'
