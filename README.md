@@ -138,7 +138,7 @@ Recoverable also allows you to configure a custom error handling method. This sh
       baz
     end
 
-    def handle_error(:error)
+    def handle_error(error:)
       "#{error} was retried twice, raised and then this method was called."
     end
   end
