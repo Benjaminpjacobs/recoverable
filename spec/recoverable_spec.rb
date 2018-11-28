@@ -214,24 +214,24 @@ RSpec.describe Recoverable do
           extend Recoverable
           recover :bar, tries: 2, on: CustomError, custom_handler: :handle_error
 
-          def bar(arg:nil)
+          def bar(string, array, arg: nil)
             baz
           end
 
           def baz; end
 
-          def handle_error(error:, arg:)
-            arg
+          def handle_error(*args, error:)
+            args
           end
 
         end
 
-        subject { instance.bar(arg: "I'm a keyword Arg")}
+        subject { instance.bar('foo', ['bar', 'baz'], arg: "I'm a keyword Arg")}
 
         it "has access to the keyword args" do
           allow_any_instance_of(self.class::TestClass).to receive(:baz).and_raise(CustomError)
           expect{ subject }.to_not raise_error(Recoverable::RetryCountExceeded)
-          expect(subject).to eq("I'm a keyword Arg")
+          expect(subject).to eq(["foo", ["bar", "baz"], {:arg=>"I'm a keyword Arg"}])
         end
       end
 
